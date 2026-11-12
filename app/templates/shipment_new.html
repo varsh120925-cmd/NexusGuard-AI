@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Shipment Registration - NexusGuard AI{% endblock %}
+{% block page_title %}Register New Consignment{% endblock %}
+{% block page_subtitle %}Enroll shipment parameters into the active ML risk monitoring pipeline{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="nexus-card">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-box-seam text-primary"></i> Consignment Registration & Operational Parameters</h5>
+            </div>
+            <div class="nexus-card-body">
+                <form id="newShipmentForm">
+                    <!-- Route Section -->
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-geo-alt me-1"></i> Corridor & Geography</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Origin Logistics Hub *</label>
+                            <select id="originCity" class="form-select" required>
+                                {% for hub in hubs %}
+                                <option value="{{ hub }}" {% if hub == 'New York' %}selected{% endif %}>{{ hub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Destination Logistics Hub *</label>
+                            <select id="destinationCity" class="form-select" required>
+                                {% for hub in hubs %}
+                                <option value="{{ hub }}" {% if hub == 'Rotterdam' %}selected{% endif %}>{{ hub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Estimated Route Distance (km)</label>
+                            <div class="input-group">
+                                <input type="number" id="distanceKm" class="form-control" placeholder="Auto-calculated if blank" min="10" step="0.1">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCalcDist" title="Compute geodesic corridor distance">
+                                    <i class="bi bi-calculator"></i> Auto-Fill
+                                </button>
+                            </div>
+                            <small class="text-muted">Calculates geodesic transit distance automatically.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Intermediate Transit / Transfer Stops</label>
+                            <input type="number" id="transitStops" class="form-control" value="1" min="0" max="8" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-3"/>
+
+                    <!-- Freight Specifications -->
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-box me-1"></i> Freight Specifications & Value</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Primary Transport Mode *</label>
+                            <select id="transportMode" class="form-select" required>
+                                <option value="Road" selected>Road Freight</option>
+                                <option value="Air">Air Cargo</option>
+                                <option value="Sea">Maritime Freight</option>
+                                <option value="Rail">Rail Intermodal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Cargo Classification *</label>
+                            <select id="cargoType" class="form-select" required>
+                                <option value="Electronics" selected>High-Value Electronics</option>
+                                <option value="Pharmaceuticals">Pharmaceuticals & Biologics</option>
+                                <option value="Automotive Parts">Automotive Components</option>
+                                <option value="Perishables & Food">Perishables & Fresh Food</option>
+                                <option value="Apparel & Textiles">Apparel & Textiles</option>
+                                <option value="Heavy Machinery">Heavy Industrial Machinery</option>
+                                <option value="Chemicals">Specialty Chemicals</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Declared Consignment Value (USD) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" id="shipmentValue" class="form-control" value="45000.00" min="10" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Gross Cargo Weight (kg) *</label>
+                            <div class="input-group">
+                                <input type="number" id="cargoWeight" class="form-control" value="320.0" min="0.1" step="0.1" required>
+                                <span class="input-group-text">kg</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Dispatch Priority Level</label>
+                            <select id="dispatchPriority" class="form-select">
+                                <option value="Standard" selected>Standard Freight</option>
+                                <option value="Express">Express Guaranteed</option>
+                                <option value="Overnight">Overnight Priority</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center gap-4 pt-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkFragile">
+                                <label class="form-check-label small fw-bold" for="checkFragile">Fragile Handling</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkPerishable">
+                                <label class="form-check-label small fw-bold" for="checkPerishable">Temperature Sensitive / Perishable</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3"/>
+
+                    <!-- Carrier & SLA Parameters -->
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3"><i class="bi bi-truck me-1"></i> Carrier Track Record & Delivery Window</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Contracted Carrier Name</label>
+                            <input type="text" id="carrierName" class="form-control" value="Nexus Express Global Logistics">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Carrier Historical Delay Rate: <span id="delayRateDisplay" class="text-primary fw-bold">12%</span></label>
+                            <input type="range" class="form-range" id="carrierDelayRate" min="0.04" max="0.50" step="0.01" value="0.12">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <a href="/dashboard" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-nexus-primary px-4 py-2" id="btnSubmitShipment">
+                            <i class="bi bi-shield-check me-1"></i> Enroll & Run Immediate Risk Assessment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal fade" id="shipmentSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle-fill text-success me-2"></i> Shipment Registered & Analyzed</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <span class="badge bg-light text-dark border fs-6 px-3 py-2" id="modalTracking">NXG-123456</span>
+                </div>
+                <div class="gauge-container mb-3">
+                    <div class="gauge-circle mx-auto" id="modalGaugeCircle">
+                        <span class="gauge-score" id="modalRiskScore">34.2</span>
+                        <span class="gauge-total">OUT OF 100</span>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-1" id="modalRiskCategory">Low Risk</h5>
+                <p class="text-muted small mb-3" id="modalRiskSummary">ML probability and live Open-Meteo weather parameters evaluated successfully.</p>
+                
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="/dashboard" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+                    <a href="/history" class="btn btn-sm btn-nexus-primary">View in History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const slider = document.getElementById("carrierDelayRate");
+    const display = document.getElementById("delayRateDisplay");
+    slider.addEventListener("input", (e) => {
+        display.textContent = `${Math.round(e.target.value * 100)}%`;
+    });
+
+    // Auto distance calculation based on cities
+    document.getElementById("btnCalcDist").addEventListener("click", async () => {
+        const orig = document.getElementById("originCity").value;
+        const dest = document.getElementById("destinationCity").value;
+        try {
+            const resp = await fetch(`/api/weather?location=${encodeURIComponent(orig)}`);
+            const dResp = await fetch(`/api/weather?location=${encodeURIComponent(dest)}`);
+            const oData = await resp.json();
+            const dData = await dResp.json();
+            if (oData.latitude && dData.latitude) {
+                const R = 6371;
+                const dLat = (dData.latitude - oData.latitude) * Math.PI / 180;
+                const dLon = (dData.longitude - oData.longitude) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(oData.latitude * Math.PI / 180) * Math.cos(dData.latitude * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const d = Math.round(R * c);
+                document.getElementById("distanceKm").value = d;
+                NexusApp.showToast("Distance Computed", `Geodesic distance is approx ${d.toLocaleString()} km.`, "success");
+            }
+        } catch (e) {
+            NexusApp.showToast("Error", "Could not automatically resolve corridor distance.", "danger");
+        }
+    });
+
+    // Submit shipment form
+    document.getElementById("newShipmentForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("btnSubmitShipment");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Processing ML Pipeline...`;
+
+        const payload = {
+            origin: document.getElementById("originCity").value,
+            destination: document.getElementById("destinationCity").value,
+            distance_km: parseFloat(document.getElementById("distanceKm").value) || null,
+            transit_stops: parseInt(document.getElementById("transitStops").value) || 1,
+            transport_mode: document.getElementById("transportMode").value,
+            cargo_type: document.getElementById("cargoType").value,
+            shipment_value_usd: parseFloat(document.getElementById("shipmentValue").value),
+            weight_kg: parseFloat(document.getElementById("cargoWeight").value),
+            priority: document.getElementById("dispatchPriority").value,
+            is_fragile: document.getElementById("checkFragile").checked,
+            is_perishable: document.getElementById("checkPerishable").checked,
+            carrier_name: document.getElementById("carrierName").value,
+            carrier_historical_delay_rate: parseFloat(document.getElementById("carrierDelayRate").value)
+        };
+
+        try {
+            const resp = await fetch("/api/shipments", {
+                method: "POST",
+                headers: NexusApp.getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                document.getElementById("modalTracking").textContent = data.tracking_number;
+                document.getElementById("modalRiskScore").textContent = data.overall_risk_score.toFixed(1);
+                document.getElementById("modalRiskCategory").textContent = data.risk_category;
+                
+                const circle = document.getElementById("modalGaugeCircle");
+                circle.className = "gauge-circle mx-auto " + (data.overall_risk_score >= 70 ? "high" : (data.overall_risk_score >= 40 ? "medium" : "low"));
+
+                const modal = new bootstrap.Modal(document.getElementById("shipmentSuccessModal"));
+                modal.show();
+            } else {
+                alert(data.detail || "Error registering shipment.");
+            }
+        } catch (err) {
+            alert("Network connection error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-shield-check me-1"></i> Enroll & Run Immediate Risk Assessment`;
+        }
+    });
+</script>
+{% endblock %}

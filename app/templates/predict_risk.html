@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Shipment Risk Prediction - NexusGuard AI{% endblock %}
+{% block page_title %}Shipment Risk Prediction Studio{% endblock %}
+{% block page_subtitle %}Simulate operational variables, forecast delay probability & audit multi-factor components{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Input Parameters Column -->
+    <div class="col-lg-5">
+        <div class="nexus-card">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-sliders text-primary"></i> Simulation Parameters</h5>
+            </div>
+            <div class="nexus-card-body">
+                <form id="predictionSimForm">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Origin</label>
+                            <select id="simOrigin" class="form-select form-select-sm" required>
+                                {% for hub in hubs %}
+                                <option value="{{ hub }}" {% if hub == 'Shanghai' %}selected{% endif %}>{{ hub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Destination</label>
+                            <select id="simDestination" class="form-select form-select-sm" required>
+                                {% for hub in hubs %}
+                                <option value="{{ hub }}" {% if hub == 'Los Angeles' %}selected{% endif %}>{{ hub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Transport Mode</label>
+                            <select id="simMode" class="form-select form-select-sm">
+                                <option value="Sea" selected>Maritime Freight</option>
+                                <option value="Air">Air Freight</option>
+                                <option value="Road">Road Freight</option>
+                                <option value="Rail">Rail Intermodal</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Cargo Type</label>
+                            <select id="simCargo" class="form-select form-select-sm">
+                                <option value="Electronics" selected>Electronics</option>
+                                <option value="Pharmaceuticals">Pharmaceuticals</option>
+                                <option value="Perishables & Food">Perishables & Food</option>
+                                <option value="Automotive Parts">Automotive Parts</option>
+                                <option value="Apparel & Textiles">Apparel & Textiles</option>
+                                <option value="Chemicals">Chemicals</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Consignment Value ($)</label>
+                            <input type="number" id="simValue" class="form-control form-control-sm" value="125000" min="10" step="100">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Gross Weight (kg)</label>
+                            <input type="number" id="simWeight" class="form-control form-control-sm" value="850" min="1" step="1">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Transfer Stops</label>
+                            <input type="number" id="simStops" class="form-control form-control-sm" value="2" min="0" max="6">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Priority</label>
+                            <select id="simPriority" class="form-select form-select-sm">
+                                <option value="Standard" selected>Standard</option>
+                                <option value="Express">Express</option>
+                                <option value="Overnight">Overnight</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="simFragile">
+                            <label class="form-check-label small" for="simFragile">Fragile</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="simPerishable">
+                            <label class="form-check-label small" for="simPerishable">Perishable</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Carrier Historical Delay Rate: <span id="simDelayRateText" class="text-primary fw-bold">18%</span></label>
+                        <input type="range" class="form-range" id="simDelayRate" min="0.04" max="0.50" step="0.01" value="0.18">
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-nexus-primary py-2" id="btnRunPrediction">
+                            <i class="bi bi-cpu me-1"></i> Compute ML Risk Prediction
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Analysis Column -->
+    <div class="col-lg-7">
+        <div id="simEmptyState" class="nexus-card p-5 text-center text-muted">
+            <i class="bi bi-cpu text-primary display-4 mb-3"></i>
+            <h5>Ready for Prediction Simulation</h5>
+            <p class="small mb-0">Configure parameters on the left and click "Compute ML Risk Prediction" to query the trained Gradient Boosting model and Open-Meteo live API.</p>
+        </div>
+
+        <div id="simResultsState" class="d-none">
+            <!-- Overall Score Card -->
+            <div class="nexus-card mb-3">
+                <div class="nexus-card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-sm-5 text-center border-end">
+                            <div class="gauge-circle mx-auto mb-2" id="resGaugeCircle">
+                                <span class="gauge-score" id="resOverallScore">0</span>
+                                <span class="gauge-total">OUT OF 100</span>
+                            </div>
+                            <h5 class="fw-bold mb-1" id="resRiskCategory">Low Risk</h5>
+                            <span class="badge bg-light text-dark border small" id="resModelVersion">GradientBoosting-v1.0</span>
+                        </div>
+                        <div class="col-sm-7 ps-sm-4">
+                            <h6 class="fw-bold mb-2 text-uppercase text-muted small">Risk Vector Summary</h6>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>ML Disruption Probability:</span>
+                                    <strong id="resMlProb">0.0%</strong>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-info" id="resMlBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Open-Meteo Weather Severity:</span>
+                                    <strong id="resWeatherSeverity">0.0/100</strong>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" id="resWeatherBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Fraud & Anomaly Intensity:</span>
+                                    <strong id="resAnomalyScore">0.0/100</strong>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-danger" id="resAnomalyBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Weather Observation Card -->
+            <div class="nexus-card mb-3">
+                <div class="nexus-card-header py-2">
+                    <h6 class="nexus-card-title mb-0 small"><i class="bi bi-cloud-sun text-primary"></i> Live Atmospheric Conditions (<span id="resWeatherLoc">New York</span>)</h6>
+                    <span class="badge bg-success" id="resWeatherLiveBadge">Live API Connected</span>
+                </div>
+                <div class="nexus-card-body p-3">
+                    <div class="row text-center g-2">
+                        <div class="col-3 border-end">
+                            <small class="text-muted d-block">Condition</small>
+                            <strong class="small" id="resWeatherDesc">Partly cloudy</strong>
+                        </div>
+                        <div class="col-3 border-end">
+                            <small class="text-muted d-block">Temperature</small>
+                            <strong class="small" id="resWeatherTemp">18.0°C</strong>
+                        </div>
+                        <div class="col-3 border-end">
+                            <small class="text-muted d-block">Precipitation</small>
+                            <strong class="small" id="resWeatherPrecip">0.0 mm</strong>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted d-block">Wind Velocity</small>
+                            <strong class="small" id="resWeatherWind">12.0 km/h</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contributing Risk Factors Breakdown -->
+            <div class="nexus-card mb-3">
+                <div class="nexus-card-header py-2">
+                    <h6 class="nexus-card-title mb-0 small"><i class="bi bi-bar-chart-steps text-primary"></i> Contributing Factor Attribution</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Dimension</th>
+                                <th>Raw Measurement</th>
+                                <th>Impact</th>
+                                <th>Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resFactorsTbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Prescriptive AI Recommendations -->
+            <div class="nexus-card">
+                <div class="nexus-card-header py-2">
+                    <h6 class="nexus-card-title mb-0 small"><i class="bi bi-lightbulb text-primary"></i> Prescriptive Recommendations</h6>
+                </div>
+                <div class="nexus-card-body p-3" id="resRecsContainer">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const simDelayRate = document.getElementById("simDelayRate");
+    const simDelayRateText = document.getElementById("simDelayRateText");
+    simDelayRate.addEventListener("input", (e) => {
+        simDelayRateText.textContent = `${Math.round(e.target.value * 100)}%`;
+    });
+
+    document.getElementById("predictionSimForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("btnRunPrediction");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Forecasting...`;
+
+        const payload = {
+            origin: document.getElementById("simOrigin").value,
+            destination: document.getElementById("simDestination").value,
+            transport_mode: document.getElementById("simMode").value,
+            cargo_type: document.getElementById("simCargo").value,
+            shipment_value_usd: parseFloat(document.getElementById("simValue").value),
+            weight_kg: parseFloat(document.getElementById("simWeight").value),
+            transit_stops: parseInt(document.getElementById("simStops").value),
+            priority: document.getElementById("simPriority").value,
+            is_fragile: document.getElementById("simFragile").checked,
+            is_perishable: document.getElementById("simPerishable").checked,
+            carrier_historical_delay_rate: parseFloat(document.getElementById("simDelayRate").value)
+        };
+
+        try {
+            const resp = await fetch("/api/predict-risk", {
+                method: "POST",
+                headers: NexusApp.getHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                document.getElementById("simEmptyState").classList.add("d-none");
+                document.getElementById("simResultsState").classList.remove("d-none");
+
+                // Score & Class
+                document.getElementById("resOverallScore").textContent = data.overall_risk_score.toFixed(1);
+                document.getElementById("resRiskCategory").textContent = data.risk_category;
+                
+                const circle = document.getElementById("resGaugeCircle");
+                circle.className = "gauge-circle mx-auto mb-2 " + (data.overall_risk_score >= 70 ? "high" : (data.overall_risk_score >= 40 ? "medium" : "low"));
+
+                // Bars
+                const mlPct = (data.ml_probability * 100).toFixed(1);
+                document.getElementById("resMlProb").textContent = `${mlPct}%`;
+                document.getElementById("resMlBar").style.width = `${mlPct}%`;
+
+                const wSev = ((data.weather.severity_index || 0.05) * 100).toFixed(1);
+                document.getElementById("resWeatherSeverity").textContent = `${wSev}/100`;
+                document.getElementById("resWeatherBar").style.width = `${wSev}%`;
+
+                const aScr = (data.anomaly.anomaly_score || 0.0).toFixed(1);
+                document.getElementById("resAnomalyScore").textContent = `${aScr}/100`;
+                document.getElementById("resAnomalyBar").style.width = `${aScr}%`;
+
+                // Weather
+                document.getElementById("resWeatherLoc").textContent = data.weather.location_name;
+                document.getElementById("resWeatherDesc").textContent = data.weather.weather_description || "Fair";
+                document.getElementById("resWeatherTemp").textContent = data.weather.temperature_c !== null ? `${data.weather.temperature_c}°C` : "N/A";
+                document.getElementById("resWeatherPrecip").textContent = data.weather.precipitation_mm !== null ? `${data.weather.precipitation_mm} mm` : "N/A";
+                document.getElementById("resWeatherWind").textContent = data.weather.wind_speed_kmh !== null ? `${data.weather.wind_speed_kmh} km/h` : "N/A";
+                
+                const liveBadge = document.getElementById("resWeatherLiveBadge");
+                if (data.weather.is_live) {
+                    liveBadge.className = "badge bg-success";
+                    liveBadge.textContent = "Live Open-Meteo API Connected";
+                } else {
+                    liveBadge.className = "badge bg-secondary";
+                    liveBadge.textContent = "Historical Baseline Weather";
+                }
+
+                // Factors table
+                const factorsTbody = document.getElementById("resFactorsTbody");
+                factorsTbody.innerHTML = "";
+                data.factor_breakdown.forEach(f => {
+                    const row = `
+                        <tr>
+                            <td><strong>${f.dimension}</strong></td>
+                            <td>${f.raw_value}</td>
+                            <td><span class="badge bg-${f.status === 'High' || f.status === 'Critical' ? 'danger' : (f.status === 'Medium' ? 'warning text-dark' : 'success')}">${f.status}</span></td>
+                            <td>${f.weight_percent}%</td>
+                        </tr>
+                    `;
+                    factorsTbody.insertAdjacentHTML("beforeend", row);
+                });
+
+                // Recommendations
+                const recsContainer = document.getElementById("resRecsContainer");
+                recsContainer.innerHTML = "";
+                data.recommendations.forEach(r => {
+                    const priorityClass = r.priority === 'Critical' || r.priority === 'High' ? 'high' : (r.priority === 'Medium' ? 'medium' : 'low');
+                    const item = `
+                        <div class="rec-item ${priorityClass}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="small">${r.action}</strong>
+                                <span class="badge bg-${priorityClass === 'high' ? 'danger' : (priorityClass === 'medium' ? 'warning text-dark' : 'secondary')} small">${r.priority}</span>
+                            </div>
+                            <p class="small text-muted mb-0">${r.description}</p>
+                        </div>
+                    `;
+                    recsContainer.insertAdjacentHTML("beforeend", item);
+                });
+
+            } else {
+                alert(data.detail || "Prediction error.");
+            }
+        } catch (err) {
+            alert("Error querying prediction engine: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-cpu me-1"></i> Compute ML Risk Prediction`;
+        }
+    });
+</script>
+{% endblock %}

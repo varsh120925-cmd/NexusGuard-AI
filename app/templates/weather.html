@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Live Weather Monitoring - NexusGuard AI{% endblock %}
+{% block page_title %}Real-Time Atmospheric & Weather Monitoring{% endblock %}
+{% block page_subtitle %}Open-Meteo API live observations across international freight terminals{% endblock %}
+
+{% block content %}
+<!-- Live Query Hero Section -->
+<div class="weather-card-hero mb-4">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <span class="badge bg-info text-dark mb-2">Live Weather Radar</span>
+            <h2 class="fw-bold mb-2">Global Logistics Atmospheric Telemetry</h2>
+            <p class="text-light opacity-75 small mb-3">Query real-time meteorological metrics via Open-Meteo API to anticipate weather-induced flight cancellations, maritime squalls, and roadway freezing delays.</p>
+            
+            <form id="weatherSearchForm" class="d-flex gap-2">
+                <input type="text" id="weatherQueryCity" class="form-control" placeholder="Enter logistics hub (e.g. Frankfurt, Tokyo, Chicago, Rotterdam)" value="Rotterdam" required>
+                <button type="submit" class="btn btn-nexus-primary px-4" id="btnQueryWeather">
+                    <i class="bi bi-search"></i> Query
+                </button>
+            </form>
+        </div>
+        <div class="col-lg-6 mt-4 mt-lg-0">
+            <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" id="heroHubName">Rotterdam</h5>
+                    <span class="badge bg-success" id="heroLiveStatus"><i class="bi bi-wifi"></i> Open-Meteo Live API</span>
+                </div>
+                <div class="row text-center g-2 mb-3">
+                    <div class="col-3">
+                        <small class="text-light opacity-75 d-block">Condition</small>
+                        <strong class="fs-6" id="heroCondition">Overcast</strong>
+                    </div>
+                    <div class="col-3">
+                        <small class="text-light opacity-75 d-block">Temperature</small>
+                        <strong class="fs-6 text-cyan" id="heroTemp">11.5°C</strong>
+                    </div>
+                    <div class="col-3">
+                        <small class="text-light opacity-75 d-block">Precipitation</small>
+                        <strong class="fs-6" id="heroPrecip">0.0 mm</strong>
+                    </div>
+                    <div class="col-3">
+                        <small class="text-light opacity-75 d-block">Wind Speed</small>
+                        <strong class="fs-6" id="heroWind">14.0 km/h</strong>
+                    </div>
+                </div>
+                <div class="small p-2 rounded" style="background: rgba(0, 0, 0, 0.25);" id="heroAdvisory">
+                    <i class="bi bi-info-circle text-info me-1"></i> Atmospheric conditions are within normal operational limits.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Terminals Weather Grid -->
+<div class="nexus-card">
+    <div class="nexus-card-header">
+        <h5 class="nexus-card-title"><i class="bi bi-globe-americas text-primary"></i> 20 Primary Global Intermodal Terminals Live Matrix</h5>
+        <button class="btn btn-sm btn-outline-secondary" id="btnRefreshHubs"><i class="bi bi-arrow-clockwise"></i> Refresh Telemetry</button>
+    </div>
+    <div class="table-responsive">
+        <table class="nexus-table">
+            <thead>
+                <tr>
+                    <th>Terminal Hub</th>
+                    <th>Country</th>
+                    <th>Coordinates</th>
+                    <th>Current Weather</th>
+                    <th>Temp (°C)</th>
+                    <th>Precipitation</th>
+                    <th>Wind Speed</th>
+                    <th>Severity Index</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="hubsTbody">
+                {% for hub in hubs_data %}
+                <tr>
+                    <td><strong>{{ hub.name }}</strong></td>
+                    <td>{{ hub.country }}</td>
+                    <td><small class="text-muted">{{ hub.lat }}, {{ hub.lng }}</small></td>
+                    <td>{{ hub.weather_description }}</td>
+                    <td><strong class="text-primary">{{ hub.temperature_c if hub.temperature_c is not none else 'N/A' }}°C</strong></td>
+                    <td>{{ hub.precipitation_mm if hub.precipitation_mm is not none else 'N/A' }} mm</td>
+                    <td>{{ hub.wind_speed_kmh if hub.wind_speed_kmh is not none else 'N/A' }} km/h</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span>{{ "{:.0f}".format((hub.severity_index or 0.05) * 100) }}%</span>
+                            <div class="progress flex-grow-1" style="height: 5px; width: 50px;">
+                                <div class="progress-bar {% if hub.severity_index > 0.4 %}bg-danger{% elif hub.severity_index > 0.2 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ (hub.severity_index or 0.05) * 100 }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if hub.is_live %}
+                        <span class="badge bg-success small"><i class="bi bi-check2-circle"></i> Live API</span>
+                        {% else %}
+                        <span class="badge bg-secondary small">Cached / Baseline</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById("weatherSearchForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const city = document.getElementById("weatherQueryCity").value;
+        const btn = document.getElementById("btnQueryWeather");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+
+        try {
+            const resp = await fetch(`/api/weather?location=${encodeURIComponent(city)}`);
+            const data = await resp.json();
+            if (resp.ok) {
+                document.getElementById("heroHubName").textContent = data.location_name;
+                document.getElementById("heroCondition").textContent = data.weather_description || "Clear";
+                document.getElementById("heroTemp").textContent = data.temperature_c !== null ? `${data.temperature_c}°C` : "N/A";
+                document.getElementById("heroPrecip").textContent = data.precipitation_mm !== null ? `${data.precipitation_mm} mm` : "N/A";
+                document.getElementById("heroWind").textContent = data.wind_speed_kmh !== null ? `${data.wind_speed_kmh} km/h` : "N/A";
+                
+                const adv = data.risk_warnings && data.risk_warnings.length > 0 ? data.risk_warnings[0] : "Normal operational parameters.";
+                document.getElementById("heroAdvisory").innerHTML = `<i class="bi bi-info-circle text-info me-1"></i> ${adv}`;
+
+                const liveBadge = document.getElementById("heroLiveStatus");
+                if (data.is_live) {
+                    liveBadge.className = "badge bg-success";
+                    liveBadge.innerHTML = `<i class="bi bi-wifi"></i> Open-Meteo Live API`;
+                } else {
+                    liveBadge.className = "badge bg-secondary";
+                    liveBadge.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Baseline Data`;
+                }
+            } else {
+                alert("Failed to retrieve weather.");
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-search"></i> Query`;
+        }
+    });
+
+    document.getElementById("btnRefreshHubs").addEventListener("click", async () => {
+        const btn = document.getElementById("btnRefreshHubs");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Refreshing...`;
+        window.location.reload();
+    });
+</script>
+{% endblock %}

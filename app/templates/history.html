@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Shipment History - NexusGuard AI{% endblock %}
+{% block page_title %}Shipment History & Predictive Logs{% endblock %}
+{% block page_subtitle %}Comprehensive historical audit records of registered freight consignments{% endblock %}
+
+{% block content %}
+<div class="nexus-card">
+    <div class="nexus-card-header flex-wrap gap-2">
+        <h5 class="nexus-card-title"><i class="bi bi-clock-history text-primary"></i> Historical Consignment Logs</h5>
+        
+        <!-- Search and Filters -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <input type="text" id="histSearch" class="form-control form-control-sm" placeholder="Search tracking, hub, cargo..." style="width: 220px;" value="{{ search or '' }}">
+            
+            <select id="histFilterRisk" class="form-select form-select-sm" style="width: 140px;">
+                <option value="All" {% if risk_filter == 'All' or not risk_filter %}selected{% endif %}>All Risks</option>
+                <option value="High Risk" {% if risk_filter == 'High Risk' %}selected{% endif %}>High Risk</option>
+                <option value="Medium Risk" {% if risk_filter == 'Medium Risk' %}selected{% endif %}>Medium Risk</option>
+                <option value="Low Risk" {% if risk_filter == 'Low Risk' %}selected{% endif %}>Low Risk</option>
+            </select>
+
+            <select id="histFilterMode" class="form-select form-select-sm" style="width: 140px;">
+                <option value="All" {% if mode_filter == 'All' or not mode_filter %}selected{% endif %}>All Modes</option>
+                <option value="Road" {% if mode_filter == 'Road' %}selected{% endif %}>Road</option>
+                <option value="Air" {% if mode_filter == 'Air' %}selected{% endif %}>Air</option>
+                <option value="Sea" {% if mode_filter == 'Sea' %}selected{% endif %}>Sea</option>
+                <option value="Rail" {% if mode_filter == 'Rail' %}selected{% endif %}>Rail</option>
+            </select>
+
+            <button type="button" class="btn btn-sm btn-nexus-primary" id="btnApplyFilters">
+                <i class="bi bi-filter"></i> Filter
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="nexus-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th style="cursor: pointer;" onclick="sortTable(0)">Tracking ID <i class="bi bi-arrow-down-up small"></i></th>
+                    <th style="cursor: pointer;" onclick="sortTable(1)">Corridor <i class="bi bi-arrow-down-up small"></i></th>
+                    <th>Mode</th>
+                    <th>Cargo Type</th>
+                    <th style="cursor: pointer;" onclick="sortTable(4)">Declared Value <i class="bi bi-arrow-down-up small"></i></th>
+                    <th style="cursor: pointer;" onclick="sortTable(5)">Risk Index <i class="bi bi-arrow-down-up small"></i></th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Date Registered</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in shipments %}
+                <tr>
+                    <td><strong>{{ item.tracking_number }}</strong></td>
+                    <td>{{ item.origin }} <i class="bi bi-arrow-right text-muted small"></i> {{ item.destination }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ item.transport_mode }}</span></td>
+                    <td>{{ item.cargo_type }}</td>
+                    <td>${{ "{:,.2f}".format(item.shipment_value_usd) }}</td>
+                    <td>
+                        <strong class="{% if item.risk_score >= 70 %}text-danger{% elif item.risk_score >= 40 %}text-warning{% else %}text-success{% endif %}">
+                            {{ "{:.1f}".format(item.risk_score) }}
+                        </strong>
+                    </td>
+                    <td>
+                        {% if item.risk_category == 'High Risk' %}
+                        <span class="badge-risk-high">High Risk</span>
+                        {% elif item.risk_category == 'Medium Risk' %}
+                        <span class="badge-risk-medium">Medium Risk</span>
+                        {% else %}
+                        <span class="badge-risk-low">Low Risk</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.is_suspicious %}
+                        <span class="badge-suspicious">{{ item.investigation_status }}</span>
+                        {% else %}
+                        <span class="badge bg-light text-dark border">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ item.created_at }}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-light border py-1 px-2 btn-gen-pdf" data-id="{{ item.id }}" title="Generate & Download PDF Audit Report">
+                            <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">No historical shipments matching query criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById("btnApplyFilters").addEventListener("click", () => {
+        const q = document.getElementById("histSearch").value;
+        const r = document.getElementById("histFilterRisk").value;
+        const m = document.getElementById("histFilterMode").value;
+        window.location.href = `/history?search=${encodeURIComponent(q)}&risk_category=${encodeURIComponent(r)}&transport_mode=${encodeURIComponent(m)}`;
+    });
+
+    document.querySelectorAll(".btn-gen-pdf").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+
+            try {
+                const resp = await fetch(`/api/reports/generate/${id}`, {
+                    method: "POST",
+                    headers: NexusApp.getHeaders()
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    NexusApp.showToast("Report Created", "Downloading PDF...", "success");
+                    window.location.href = data.download_url;
+                } else {
+                    alert("Error generating report.");
+                }
+            } catch (err) {
+                alert("Connection failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="bi bi-file-earmark-pdf text-danger"></i> PDF`;
+            }
+        });
+    });
+
+    function sortTable(n) {
+        let table = document.getElementById("historyTable");
+        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (!x || !y) continue;
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

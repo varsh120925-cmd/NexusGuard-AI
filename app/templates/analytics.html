@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Analytics - NexusGuard AI{% endblock %}
+{% block page_title %}Model Analytics & Feature Attribution{% endblock %}
+{% block page_subtitle %}Evaluated machine learning performance metrics and factor importance distributions{% endblock %}
+
+{% block content %}
+<!-- Model Performance Comparison Table -->
+<div class="nexus-card mb-4">
+    <div class="nexus-card-header">
+        <h5 class="nexus-card-title"><i class="bi bi-award-fill text-primary"></i> Machine Learning Classifier Benchmark (Held-Out Test Set: 2,400 Records)</h5>
+        <span class="badge bg-success">Optimal Selected: {{ metrics.best_model }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="nexus-table">
+            <thead>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1 Score</th>
+                    <th>ROC-AUC</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, m in metrics.all_models_comparison.items() %}
+                <tr class="{% if name == metrics.best_model %}table-primary fw-bold{% endif %}">
+                    <td>
+                        {{ name }}
+                        {% if name == metrics.best_model %}
+                        <span class="badge bg-primary ms-2"><i class="bi bi-check-circle"></i> Production Active</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ "{:.2f}%".format(m.accuracy * 100) }}</td>
+                    <td>{{ "{:.2f}%".format(m.precision * 100) }}</td>
+                    <td>{{ "{:.2f}%".format(m.recall * 100) }}</td>
+                    <td><strong>{{ "{:.4f}".format(m.f1_score) }}</strong></td>
+                    <td>{{ "{:.4f}".format(m.roc_auc) }}</td>
+                    <td>
+                        {% if name == metrics.best_model %}
+                        <span class="badge bg-success">Selected</span>
+                        {% else %}
+                        <span class="badge bg-light text-dark border">Evaluated</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Feature Importance Chart -->
+    <div class="col-lg-7">
+        <div class="nexus-card h-100">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-bar-chart-fill text-primary"></i> Gradient Boosting Feature Importance Ranking</h5>
+            </div>
+            <div class="nexus-card-body">
+                <div style="position: relative; height: 320px; width: 100%;">
+                    <canvas id="chartFeatureImportance"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confusion Matrix & Dataset Split -->
+    <div class="col-lg-5">
+        <div class="nexus-card h-100">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-grid-3x3 text-primary"></i> Test Confusion Matrix</h5>
+                <span class="badge bg-light text-dark border">2,400 Test Samples</span>
+            </div>
+            <div class="nexus-card-body d-flex flex-column justify-content-center">
+                {% set cm = metrics.evaluation_metrics.confusion_matrix %}
+                <div class="p-3 border rounded text-center mb-3 bg-light">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <div class="p-3 bg-white border rounded">
+                                <small class="text-muted d-block">True Negative (On-Time)</small>
+                                <strong class="fs-4 text-success">{{ cm[0][0] }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-white border rounded">
+                                <small class="text-muted d-block">False Positive</small>
+                                <strong class="fs-4 text-warning">{{ cm[0][1] }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="p-3 bg-white border rounded">
+                                <small class="text-muted d-block">False Negative</small>
+                                <strong class="fs-4 text-warning">{{ cm[1][0] }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-white border rounded">
+                                <small class="text-muted d-block">True Positive (Delayed)</small>
+                                <strong class="fs-4 text-danger">{{ cm[1][1] }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="small text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Trained strictly on 9,600 historical logistics records with stratified 80/20 train/test split. Evaluation is verified on unseen held-out samples.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const fiData = {{ metrics.feature_importances | tojson }};
+    const topKeys = Object.keys(fiData).slice(0, 8);
+    const topVals = Object.values(fiData).slice(0, 8);
+
+    const ctxFi = document.getElementById('chartFeatureImportance').getContext('2d');
+    new Chart(ctxFi, {
+        type: 'bar',
+        data: {
+            labels: topKeys,
+            datasets: [{
+                label: 'Relative Importance Weight',
+                data: topVals,
+                backgroundColor: '#0284c7',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } } }
+        }
+    });
+</script>
+{% endblock %}

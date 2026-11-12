@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Alerts & Notifications - NexusGuard AI{% endblock %}
+{% block page_title %}Operational Alerts & Risk Notifications{% endblock %}
+{% block page_subtitle %}Real-time automated incident dispatch & security breach warnings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex gap-2">
+        <a href="/alerts" class="btn btn-sm {% if not unread_only %}btn-nexus-primary{% else %}btn-outline-secondary{% endif %}">All Notifications</a>
+        <a href="/alerts?unread_only=true" class="btn btn-sm {% if unread_only %}btn-nexus-primary{% else %}btn-outline-secondary{% endif %}">Unread Only</a>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary" id="btnMarkAllRead">
+        <i class="bi bi-check2-all"></i> Mark All as Read
+    </button>
+</div>
+
+<div class="row g-3">
+    {% for a in alerts %}
+    <div class="col-12">
+        <div class="nexus-card p-3 mb-0 {% if not a.is_read %}border-start border-4 border-{% if a.alert_level == 'Critical' %}danger{% elif a.alert_level == 'Warning' %}warning{% else %}info{% endif %}{% endif %}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex gap-3">
+                    <div class="kpi-icon-box mt-1" style="width: 42px; height: 42px; font-size: 18px; {% if a.alert_level == 'Critical' %}background: #fee2e2; color: #dc2626;{% elif a.alert_level == 'Warning' %}background: #fef3c7; color: #d97706;{% else %}background: #e0f2fe; color: #0284c7;{% endif %}">
+                        <i class="bi {% if a.alert_level == 'Critical' %}bi-shield-slash-fill{% elif a.alert_level == 'Warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge {% if a.alert_level == 'Critical' %}bg-danger{% elif a.alert_level == 'Warning' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                                {{ a.alert_level }}
+                            </span>
+                            <h6 class="fw-bold mb-0">{{ a.title }}</h6>
+                            {% if not a.is_read %}
+                            <span class="badge bg-primary" style="font-size: 9px;">NEW</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted small mb-2">{{ a.message }}</p>
+                        <div class="d-flex align-items-center gap-3 small text-muted">
+                            <span><i class="bi bi-clock me-1"></i> {{ a.created_at }}</span>
+                            {% if a.tracking_number %}
+                            <span><i class="bi bi-box me-1"></i> Consignment: <strong>{{ a.tracking_number }}</strong></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    {% if not a.is_read %}
+                    <button class="btn btn-sm btn-light border btn-mark-read" data-id="{{ a.id }}" title="Mark as Read">
+                        <i class="bi bi-check2"></i>
+                    </button>
+                    {% endif %}
+                    {% if a.shipment_id %}
+                    <a href="/routes?search={{ a.tracking_number }}" class="btn btn-sm btn-outline-primary" title="Inspect Corridor">
+                        <i class="bi bi-arrow-up-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-bell-slash display-4 mb-2"></i>
+        <h6>No active alerts</h6>
+        <p class="small mb-0">Operational corridors are functioning within baseline thresholds.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll(".btn-mark-read").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id");
+            try {
+                const resp = await fetch(`/api/alerts/${id}/read`, { method: "PATCH" });
+                if (resp.ok) {
+                    NexusApp.showToast("Alert Read", "Notification marked as read.", "info");
+                    setTimeout(() => window.location.reload(), 400);
+                }
+            } catch (e) {
+                // ignore
+            }
+        });
+    });
+
+    document.getElementById("btnMarkAllRead").addEventListener("click", async () => {
+        try {
+            const resp = await fetch("/api/alerts/mark-all-read", { method: "POST" });
+            if (resp.ok) {
+                NexusApp.showToast("Complete", "All notifications marked as read.", "success");
+                setTimeout(() => window.location.reload(), 400);
+            }
+        } catch (e) {
+            // ignore
+        }
+    });
+</script>
+{% endblock %}

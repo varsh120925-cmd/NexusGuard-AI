@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Detailed Shipment Reports - NexusGuard AI{% endblock %}
+{% block page_title %}Shipment Audit & Compliance Reports{% endblock %}
+{% block page_subtitle %}Executive PDF risk certifications, atmospheric audits & anomaly documentation{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Generate On-Demand Card -->
+    <div class="col-lg-4">
+        <div class="nexus-card">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-file-earmark-plus text-primary"></i> Generate New Audit PDF</h5>
+            </div>
+            <div class="nexus-card-body">
+                <form id="genReportForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Shipment to Audit *</label>
+                        <select id="reportShipmentId" class="form-select" required>
+                            <option value="">-- Choose Consignment --</option>
+                            {% for s in shipments %}
+                            <option value="{{ s.id }}">{{ s.tracking_number }} ({{ s.origin }} → {{ s.destination }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="p-3 bg-light rounded border small text-muted mb-3">
+                        <strong class="text-dark d-block mb-1">Generated PDF Includes:</strong>
+                        <ul class="mb-0 ps-3">
+                            <li>Executive Composite Risk Gauge</li>
+                            <li>ML Disruption Probability</li>
+                            <li>Open-Meteo Live Atmospheric Audit</li>
+                            <li>Fraud & Outlier Heuristic Findings</li>
+                            <li>Prescriptive Mitigation Directives</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-nexus-primary py-2" id="btnGenReport">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> Generate & Compile PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generated Reports Archive Table -->
+    <div class="col-lg-8">
+        <div class="nexus-card">
+            <div class="nexus-card-header">
+                <h5 class="nexus-card-title"><i class="bi bi-folder-check text-primary"></i> Generated PDF Reports Archive</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="nexus-table">
+                    <thead>
+                        <tr>
+                            <th>Report Title</th>
+                            <th>Tracking Consignment</th>
+                            <th>Compiled Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTbody">
+                        {% for r in reports %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+                                <strong>{{ r.report_title }}</strong>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ r.tracking_number }}</span></td>
+                            <td><small class="text-muted">{{ r.generated_date }}</small></td>
+                            <td>
+                                <a href="/api/reports/{{ r.id }}/pdf" class="btn btn-sm btn-outline-danger py-1 px-3" target="_blank">
+                                    <i class="bi bi-download me-1"></i> Download PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No reports generated yet. Select a shipment on the left to compile an executive audit PDF.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById("genReportForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("reportShipmentId").value;
+        const btn = document.getElementById("btnGenReport");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Compiling PDF Document...`;
+
+        try {
+            const resp = await fetch(`/api/reports/generate/${id}`, {
+                method: "POST",
+                headers: NexusApp.getHeaders()
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                NexusApp.showToast("Success", "PDF report compiled successfully! Initiating download...", "success");
+                window.location.href = data.download_url;
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                alert("Failed to generate report.");
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-file-earmark-pdf me-1"></i> Generate & Compile PDF`;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Fraud & Anomaly Detection - NexusGuard AI{% endblock %}
+{% block page_title %}Fraud & Anomaly Detection Console{% endblock %}
+{% block page_subtitle %}Unsupervised Isolation Forest outlier screening & suspicious pattern verification{% endblock %}
+
+{% block content %}
+<!-- Top Alert Banner -->
+<div class="alert alert-warning border d-flex align-items-center justify-content-between p-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-shield-exclamation fs-3 text-warning"></i>
+        <div>
+            <strong class="d-block">Suspicious Pattern Verification Policy</strong>
+            <span class="small text-muted">Outliers flagged by the Isolation Forest are classified as <em>"Suspicious Pattern Requiring Verification"</em>. Never treat statistical anomalies as confirmed fraud without investigator review.</span>
+        </div>
+    </div>
+    <span class="badge bg-dark px-3 py-2">Isolation Forest Contamination: 5%</span>
+</div>
+
+<!-- Anomaly Records Table -->
+<div class="nexus-card">
+    <div class="nexus-card-header">
+        <h5 class="nexus-card-title"><i class="bi bi-exclamation-octagon-fill text-danger"></i> Flagged Anomaly Manifests</h5>
+        <div class="d-flex gap-2">
+            <select id="filterStatus" class="form-select form-select-sm" style="width: 200px;">
+                <option value="All">All Investigation Statuses</option>
+                <option value="Pending Review">Pending Review</option>
+                <option value="Under Investigation">Under Investigation</option>
+                <option value="Verified Legitimate">Verified Legitimate</option>
+                <option value="Confirmed Irregularity">Confirmed Irregularity</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="nexus-table">
+            <thead>
+                <tr>
+                    <th>Tracking #</th>
+                    <th>Corridor</th>
+                    <th>Cargo / Mode</th>
+                    <th>Value ($) / Wt (kg)</th>
+                    <th>Anomaly Score</th>
+                    <th>Detected Pattern Finding</th>
+                    <th>Investigation Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="anomaliesTbody">
+                {% for a in anomalies %}
+                <tr>
+                    <td><strong>{{ a.tracking_number }}</strong></td>
+                    <td><small>{{ a.origin }} → {{ a.destination }}</small></td>
+                    <td><span class="badge bg-light text-dark border">{{ a.cargo_type }}</span><br/><small class="text-muted">{{ a.transport_mode }}</small></td>
+                    <td>${{ "{:,.2f}".format(a.shipment_value_usd) }}<br/><small class="text-muted">{{ a.weight_kg }} kg</small></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold text-danger">{{ "{:.1f}".format(a.anomaly_score) }}</span>
+                            <div class="progress flex-grow-1" style="height: 5px; width: 45px;">
+                                <div class="progress-bar bg-danger" style="width: {{ a.anomaly_score }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <ul class="mb-0 ps-3 small text-muted">
+                            {% for r in a.reasons %}
+                            <li>{{ r }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        {% if a.investigation_status == 'Confirmed Irregularity' %}
+                        <span class="badge bg-danger">{{ a.investigation_status }}</span>
+                        {% elif a.investigation_status == 'Under Investigation' %}
+                        <span class="badge bg-warning text-dark">{{ a.investigation_status }}</span>
+                        {% elif a.investigation_status == 'Verified Legitimate' %}
+                        <span class="badge bg-success">{{ a.investigation_status }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ a.investigation_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-nexus-navy py-1 px-2 btn-investigate" 
+                            data-id="{{ a.id }}" 
+                            data-trk="{{ a.tracking_number }}" 
+                            data-status="{{ a.investigation_status }}"
+                            data-notes="{{ a.resolution_notes or '' }}">
+                            <i class="bi bi-pencil-square"></i> Review
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">No suspicious anomaly patterns currently detected. All active shipments adhere to baseline parameters.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Investigation Review Modal -->
+<div class="modal fade" id="investigationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i> Update Investigation Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="investigationForm">
+                    <input type="hidden" id="modalAnomalyId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tracking Number</label>
+                        <input type="text" id="modalAnomalyTrk" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Classification Disposition</label>
+                        <select id="modalInvestigationStatus" class="form-select" required>
+                            <option value="Under Investigation">Under Investigation</option>
+                            <option value="Verified Legitimate">Verified Legitimate (Normal Variance)</option>
+                            <option value="Confirmed Irregularity">Confirmed Irregularity / Fraud Attempt</option>
+                            <option value="Pending Review">Pending Review</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Investigator Resolution Notes</label>
+                        <textarea id="modalResolutionNotes" class="form-control" rows="3" placeholder="Document physical inspection findings, customs documentation audits, or shipper communication notes..."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-nexus-primary" id="btnSaveInvestigation">Save Status Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const invModal = new bootstrap.Modal(document.getElementById("investigationModal"));
+
+    document.querySelectorAll(".btn-investigate").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.getElementById("modalAnomalyId").value = btn.getAttribute("data-id");
+            document.getElementById("modalAnomalyTrk").value = btn.getAttribute("data-trk");
+            document.getElementById("modalInvestigationStatus").value = btn.getAttribute("data-status");
+            document.getElementById("modalResolutionNotes").value = btn.getAttribute("data-notes");
+            invModal.show();
+        });
+    });
+
+    document.getElementById("investigationForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("modalAnomalyId").value;
+        const statusVal = document.getElementById("modalInvestigationStatus").value;
+        const notes = document.getElementById("modalResolutionNotes").value;
+        const btn = document.getElementById("btnSaveInvestigation");
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Saving...`;
+
+        try {
+            const resp = await fetch(`/api/anomalies/${id}/status`, {
+                method: "PATCH",
+                headers: NexusApp.getHeaders(),
+                body: JSON.stringify({
+                    investigation_status: statusVal,
+                    resolution_notes: notes
+                })
+            });
+            if (resp.ok) {
+                NexusApp.showToast("Investigation Saved", `Status updated to ${statusVal}`, "success");
+                invModal.hide();
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                alert("Failed to update status.");
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `Save Status Update`;
+        }
+    });
+
+    document.getElementById("filterStatus").addEventListener("change", (e) => {
+        const val = e.target.value;
+        window.location.href = `/fraud-detection?status=${encodeURIComponent(val)}`;
+    });
+</script>
+{% endblock %}

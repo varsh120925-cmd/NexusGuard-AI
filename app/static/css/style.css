@@ -1,0 +1,474 @@
+/* NexusGuard - Modern Logistics Risk & AI Platform Stylesheet */
+:root {
+  --nexus-navy-950: #070d1e;
+  --nexus-navy-900: #0b1329;
+  --nexus-navy-850: #0f1a38;
+  --nexus-navy-800: #162447;
+  --nexus-navy-700: #1f3261;
+  --nexus-navy-600: #2c4482;
+  
+  --nexus-cyan-500: #0284c7;
+  --nexus-cyan-400: #38bdf8;
+  --nexus-cyan-300: #7dd3fc;
+  
+  --nexus-card-bg: #ffffff;
+  --nexus-card-border: #e2e8f0;
+  --nexus-text-main: #0f172a;
+  --nexus-text-muted: #64748b;
+  --nexus-bg-light: #f1f5f9;
+  
+  --risk-low: #10b981;
+  --risk-low-bg: #d1fae5;
+  --risk-medium: #f59e0b;
+  --risk-medium-bg: #fef3c7;
+  --risk-high: #ef4444;
+  --risk-high-bg: #fee2e2;
+  
+  --sidebar-width: 260px;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--nexus-bg-light);
+  color: var(--nexus-text-main);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Sidebar */
+.nexus-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--nexus-navy-900);
+  color: #ffffff;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+}
+
+.nexus-brand {
+  padding: 22px 20px;
+  background-color: var(--nexus-navy-950);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--nexus-cyan-400);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.sidebar-nav {
+  padding: 16px 10px;
+  flex-grow: 1;
+}
+
+.nav-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #64748b;
+  padding: 12px 14px 6px;
+  font-weight: 600;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav a:hover {
+  background-color: var(--nexus-navy-800);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.sidebar-nav a.active {
+  background: linear-gradient(90deg, rgba(2, 132, 199, 0.85) 0%, rgba(2, 132, 199, 0.4) 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border-left: 3px solid var(--nexus-cyan-400);
+}
+
+.sidebar-nav a i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.sidebar-nav a.active i {
+  color: var(--nexus-cyan-400);
+}
+
+.badge-counter {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* Main Content Area */
+.nexus-main {
+  margin-left: var(--sidebar-width);
+  flex-grow: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.nexus-header {
+  background-color: #ffffff;
+  height: 64px;
+  border-bottom: 1px solid var(--nexus-card-border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.header-title-wrapper h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--nexus-navy-950);
+  margin: 0;
+}
+
+.header-title-wrapper p {
+  font-size: 12px;
+  color: var(--nexus-text-muted);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--nexus-bg-light);
+  padding: 5px 12px 5px 6px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  text-decoration: none;
+  color: var(--nexus-text-main);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  background-color: var(--nexus-navy-800);
+  color: var(--nexus-cyan-400);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Content Container */
+.nexus-content {
+  padding: 28px;
+  flex-grow: 1;
+}
+
+/* Card Components */
+.nexus-card {
+  background-color: #ffffff;
+  border: 1px solid var(--nexus-card-border);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.nexus-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--nexus-card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+}
+
+.nexus-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--nexus-navy-900);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nexus-card-body {
+  padding: 20px;
+}
+
+/* Metric / KPI Cards */
+.kpi-card {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kpi-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.kpi-icon-primary { background-color: #e0f2fe; color: #0284c7; }
+.kpi-icon-danger { background-color: var(--risk-high-bg); color: var(--risk-high); }
+.kpi-icon-warning { background-color: var(--risk-medium-bg); color: var(--risk-medium); }
+.kpi-icon-success { background-color: var(--risk-low-bg); color: var(--risk-low); }
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--nexus-navy-950);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.kpi-label {
+  font-size: 12.5px;
+  color: var(--nexus-text-muted);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Badges & Risk Tags */
+.badge-risk-low {
+  background-color: var(--risk-low-bg);
+  color: #065f46;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.badge-risk-medium {
+  background-color: var(--risk-medium-bg);
+  color: #92400e;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.badge-risk-high {
+  background-color: var(--risk-high-bg);
+  color: #991b1b;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.badge-suspicious {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #f87171;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.badge-verified {
+  background-color: #d1fae5;
+  color: #047857;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+/* Tables */
+.nexus-table {
+  width: 100%;
+  margin: 0;
+}
+
+.nexus-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--nexus-card-border);
+}
+
+.nexus-table td {
+  padding: 12px 14px;
+  font-size: 13.5px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nexus-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Buttons */
+.btn-nexus-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-nexus-primary:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-nexus-navy {
+  background-color: var(--nexus-navy-900);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+}
+
+.btn-nexus-navy:hover {
+  background-color: var(--nexus-navy-800);
+  color: #ffffff;
+}
+
+/* Risk Gauge Meter Visual */
+.gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.gauge-circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.gauge-circle.low { border: 8px solid var(--risk-low); background-color: #f0fdf4; }
+.gauge-circle.medium { border: 8px solid var(--risk-medium); background-color: #fffbeb; }
+.gauge-circle.high { border: 8px solid var(--risk-high); background-color: #fef2f2; }
+
+.gauge-score {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.gauge-total {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Recommendation list */
+.rec-item {
+  border-left: 4px solid var(--nexus-cyan-500);
+  background-color: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 10px;
+}
+
+.rec-item.high { border-left-color: var(--risk-high); background-color: #fff5f5; }
+.rec-item.medium { border-left-color: var(--risk-medium); background-color: #fffdf5; }
+.rec-item.low { border-left-color: var(--risk-low); background-color: #f6fcf8; }
+
+/* Weather Card */
+.weather-card-hero {
+  background: linear-gradient(135deg, #0b1329 0%, #162447 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(11, 19, 41, 0.2);
+}
+
+/* Responsive adjustment */
+@media (max-width: 992px) {
+  .nexus-sidebar {
+    width: 70px;
+  }
+  .nexus-brand .brand-text, .nav-section-label, .sidebar-nav span, .badge-counter {
+    display: none;
+  }
+  .nexus-main {
+    margin-left: 70px;
+  }
+}

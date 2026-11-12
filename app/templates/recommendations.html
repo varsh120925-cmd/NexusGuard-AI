@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}AI Recommendations - NexusGuard AI{% endblock %}
+{% block page_title %}AI Prescriptive Recommendations Hub{% endblock %}
+{% block page_subtitle %}Intelligent operational directives derived from machine learning & atmospheric telemetry{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="nexus-card p-3 mb-0 border-start border-4 border-danger">
+            <h6 class="fw-bold mb-1 text-danger"><i class="bi bi-shield-lock-fill me-1"></i> Fraud & Security Directives</h6>
+            <p class="small text-muted mb-0">High-priority mitigation actions for anomalies detected by Isolation Forest algorithms.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="nexus-card p-3 mb-0 border-start border-4 border-warning">
+            <h6 class="fw-bold mb-1 text-warning"><i class="bi bi-cloud-snow-fill me-1"></i> Atmospheric Contingency</h6>
+            <p class="small text-muted mb-0">Protocols for gale-force winds, freezing cold-chains, and squall rerouting.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="nexus-card p-3 mb-0 border-start border-4 border-info">
+            <h6 class="fw-bold mb-1 text-info"><i class="bi bi-signpost-2-fill me-1"></i> Route & Carrier Optimization</h6>
+            <p class="small text-muted mb-0">SLA enforcement, multi-stop consolidations, and bypass directives.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations List -->
+<div class="nexus-card">
+    <div class="nexus-card-header">
+        <h5 class="nexus-card-title"><i class="bi bi-lightbulb-fill text-primary"></i> Active Prescriptive Actions Directory</h5>
+    </div>
+    <div class="nexus-card-body p-4">
+        <div class="rec-item high">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="fs-6 text-danger"><i class="bi bi-shield-slash-fill me-1"></i> Mandate Physical Cargo Verification & Bill-of-Lading Audit</strong>
+                <span class="badge bg-danger">Critical Priority</span>
+            </div>
+            <p class="small text-muted mb-2">Triggered for high-value consignments exhibiting value-to-weight discrepancies (> $1,500/kg) in standard freight categories. Require physical seal audit before dispatch loading.</p>
+            <span class="badge bg-light text-dark border small">Target: Security Operations</span>
+        </div>
+
+        <div class="rec-item high">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="fs-6 text-danger"><i class="bi bi-snow2 me-1"></i> Install Thermal Blankets & Activate Cold-Chain IoT Loggers</strong>
+                <span class="badge bg-danger">High Priority</span>
+            </div>
+            <p class="small text-muted mb-2">Triggered when sub-zero ambient temperatures (< 0°C) are observed via Open-Meteo in corridors carrying perishable or pharmaceutical freight. Apply thermal barrier insulation at ramp staging.</p>
+            <span class="badge bg-light text-dark border small">Target: Ramp & Terminal Handling</span>
+        </div>
+
+        <div class="rec-item medium">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="fs-6 text-warning"><i class="bi bi-wind me-1"></i> Maritime Port Diversion & Squall Speed Restrictions</strong>
+                <span class="badge bg-warning text-dark">Medium Priority</span>
+            </div>
+            <p class="small text-muted mb-2">Triggered when wind velocity exceeds 60 km/h along maritime approaches. Pre-coordinate container terminal gantry cranes to secure crane booms and avoid berthing delays.</p>
+            <span class="badge bg-light text-dark border small">Target: Maritime Dispatch</span>
+        </div>
+
+        <div class="rec-item medium">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="fs-6 text-warning"><i class="bi bi-truck-flatbed me-1"></i> Secondary Carrier SLA Escalation Notice</strong>
+                <span class="badge bg-warning text-dark">Medium Priority</span>
+            </div>
+            <p class="small text-muted mb-2">Triggered when contracted carrier historical delay rate exceeds 25%. Transmit automated penalty clause warning and stand by backup carrier fleet.</p>
+            <span class="badge bg-light text-dark border small">Target: Carrier Procurement</span>
+        </div>
+
+        <div class="rec-item low">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="fs-6 text-success"><i class="bi bi-check-circle-fill me-1"></i> Standard Automated Telemetry Schedule</strong>
+                <span class="badge bg-success">Baseline</span>
+            </div>
+            <p class="small text-muted mb-2">Corridor metrics comply with target operational thresholds. Proceed with automated milestone pings and standard customs manifest submissions.</p>
+            <span class="badge bg-light text-dark border small">Target: Automated Dispatch</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

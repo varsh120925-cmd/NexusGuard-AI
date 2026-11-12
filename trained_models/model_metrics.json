@@ -1,0 +1,133 @@
+{
+  "best_model": "Gradient Boosting Classifier",
+  "evaluation_metrics": {
+    "accuracy": 0.8908,
+    "precision": 0.8704,
+    "recall": 0.856,
+    "f1_score": 0.8631,
+    "roc_auc": 0.9589,
+    "confusion_matrix": [
+      [
+        1312,
+        123
+      ],
+      [
+        139,
+        826
+      ]
+    ]
+  },
+  "all_models_comparison": {
+    "Random Forest Classifier": {
+      "accuracy": 0.88,
+      "precision": 0.8691,
+      "recall": 0.8259,
+      "f1_score": 0.847,
+      "roc_auc": 0.9516,
+      "confusion_matrix": [
+        [
+          1315,
+          120
+        ],
+        [
+          168,
+          797
+        ]
+      ]
+    },
+    "Gradient Boosting Classifier": {
+      "accuracy": 0.8908,
+      "precision": 0.8704,
+      "recall": 0.856,
+      "f1_score": 0.8631,
+      "roc_auc": 0.9589,
+      "confusion_matrix": [
+        [
+          1312,
+          123
+        ],
+        [
+          139,
+          826
+        ]
+      ]
+    },
+    "Decision Tree Classifier": {
+      "accuracy": 0.8417,
+      "precision": 0.8218,
+      "recall": 0.7741,
+      "f1_score": 0.7972,
+      "roc_auc": 0.9118,
+      "confusion_matrix": [
+        [
+          1273,
+          162
+        ],
+        [
+          218,
+          747
+        ]
+      ]
+    },
+    "Logistic Regression": {
+      "accuracy": 0.8892,
+      "precision": 0.8667,
+      "recall": 0.856,
+      "f1_score": 0.8613,
+      "roc_auc": 0.9602,
+      "confusion_matrix": [
+        [
+          1308,
+          127
+        ],
+        [
+          139,
+          826
+        ]
+      ]
+    }
+  },
+  "feature_importances": {
+    "weather_severity_index": 0.3876,
+    "distance_km": 0.1703,
+    "carrier_historical_delay_rate": 0.1661,
+    "transit_stops": 0.0888,
+    "route_risk_index": 0.0561,
+    "transport_mode_Sea": 0.0375,
+    "is_perishable_1": 0.0133,
+    "is_perishable_0": 0.0127,
+    "transport_mode_Air": 0.0091,
+    "origin_wind_kmh": 0.0087,
+    "stop_density": 0.0085,
+    "val_weight_ratio": 0.008,
+    "weight_kg": 0.0079,
+    "origin_temp_c": 0.0069,
+    "shipment_value_usd": 0.0067,
+    "origin_precip_mm": 0.0052,
+    "priority_Standard": 0.0027,
+    "cargo_type_Apparel & Textiles": 0.0014,
+    "cargo_type_Automotive Parts": 0.0007,
+    "priority_Overnight": 0.0003,
+    "is_fragile_1": 0.0003,
+    "priority_Express": 0.0002,
+    "cargo_type_Heavy Machinery": 0.0002,
+    "transport_mode_Road": 0.0002,
+    "cargo_type_Chemicals": 0.0002,
+    "cargo_type_Pharmaceuticals": 0.0001,
+    "is_fragile_0": 0.0001,
+    "cargo_type_Electronics": 0.0,
+    "transport_mode_Rail": 0.0,
+    "cargo_type_Perishables & Food": 0.0
+  },
+  "feature_count": 30,
+  "train_samples": 9600,
+  "test_samples": 2400,
+  "anomaly_features": [
+    "shipment_value_usd",
+    "weight_kg",
+    "distance_km",
+    "transit_stops",
+    "carrier_historical_delay_rate",
+    "weather_severity_index"
+  ]
+}
